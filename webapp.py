@@ -34,7 +34,8 @@ def toggle_read(paper_id):
     
     # Save the updated dataframe back to the parquet file so progress isn't lost
     st.session_state.df.to_parquet(PARQUET_PATH, engine='pyarrow', storage_options={"token": gcp_credentials})
-
+    st.success("Successfully updated!")
+    st.cache_data.clear()
     # Remember this paper's ID so we can keep its expander open
     st.session_state.last_expanded = paper_id
 
