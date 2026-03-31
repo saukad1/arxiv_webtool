@@ -193,7 +193,7 @@ for idx, row in df_view.iterrows():
 
     is_currently_expanded = st.session_state.get('last_expanded') == row['id']
     with st.expander(expander_title, expanded=is_currently_expanded):
-        col1, col2 = st.columns([1, 2.5])
+        col1, col2 = st.columns([1, 4])
         with col1:
             st.markdown(f"**Score:** :{score_color}[{row['score']:.4f}]")
             st.markdown(f"**arXiv:** [{row['id']}](https://arxiv.org/abs/{row['id']}) [:blue-badge[:material/article: PDF]](https://arxiv.org/pdf/{row['id']})")
