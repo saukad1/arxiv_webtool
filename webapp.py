@@ -70,7 +70,7 @@ if password == st.secrets["admin_password"]:
     st.subheader("Editing allowed")
 else:
     st.subheader("My arXiv filtering tool")
-    st.info(f"**Curated Daily arXiv Feed**\n\nAn automated classifier that scores daily arXiv papers in'quant-ph + hep-lat + nuc-th'lists from 0 to 1 based on their alignment with my research interests. Because keeping up with 50+ abstracts a day shouldn't be a full-time job. The most recent entry in the database is from {max_date.strftime('%m/%d/%Y')}.", icon=":material/for_you:")
+    st.info(f"**Curated Daily arXiv Feed**\n\nAn automated classifier that scores daily arXiv papers in 'quant-ph + hep-lat + nuc-th' lists from 0 to 1 based on their alignment with my research interests. Because keeping up with 50+ abstracts a day should not be a full-time job.\n\nThe most recent entry in the database is from **{max_date.strftime('%m/%d/%Y')}**.", icon=":material/for_you:")
 
 ########################################################################
 # If Passpord is correct
