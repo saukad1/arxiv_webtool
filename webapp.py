@@ -5,7 +5,6 @@ import math
 # 1. SETUP & CONFIG
 # ---------------------------------------------------------
 st.set_page_config(page_title="arXiv filter", layout="wide")
-st.header("My arXiv filtering tool")
 BUCKET_NAME = "my-arxiv-parquet-bucket"
 PARQUET_PATH = f"gs://{BUCKET_NAME}/df_streamlit.parquet"
 
@@ -193,7 +192,7 @@ else:
 if total_matches>0:
     st.markdown(f"##### Showing {start_idx + 1}-{min(end_idx, total_matches)} of {total_matches}"+date_string)
 else:
-    st.info(f"**No matches found**\n\nThe database only has entries above 0.8 alignemnt score. Change the date range or score filter.", icon=":material/error:")
+    st.info(f"**No matches found**\n\nThe database only has entries above 0.8 alignment score. Change the date range or score filter.", icon=":material/error:")
 
 df_view = filtered_df.iloc[start_idx:end_idx]
 
