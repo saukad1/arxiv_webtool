@@ -1,4 +1,4 @@
-name: Weekly Arxiv Updater
+name: Daily Arxiv Updater
 
 on:
   schedule:
