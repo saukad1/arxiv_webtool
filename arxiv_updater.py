@@ -82,8 +82,7 @@ if __name__ == "__main__":
     print('Loading dataframes')
     df_26 = pd.read_parquet(PARQUET_PATH_BIG, storage_options={"token": gcp_credentials})
     start_date = df_26['date_only'].max()
-    #end_date = pd.Timestamp.today().date()
-    end_date = pd.to_datetime('2026-03-31').date()
+    end_date = pd.Timestamp.today().date()
     print('Done!')
     print("-"*st_length)
 
@@ -112,7 +111,7 @@ if __name__ == "__main__":
         device ="cpu"
         model_id = "google/embeddinggemma-300M"
         emb_model = SentenceTransformer(model_id).to(device=device)
-        print(f"Loaded Embedding Gemma to decive {emb_model.device}")
+        print(f"Loaded Embedding Gemma to device {emb_model.device}")
         print("Total number of parameters in the model:", sum([p.numel() for _, p in emb_model.named_parameters()]))
 
         print("Loading Joblib classifier from GCS...")
@@ -146,6 +145,5 @@ if __name__ == "__main__":
                 print('Saved successfully. Exiting...')
         except ValueError:
             print("Columns do not match")
-        print("Exiting.")
     else:
         print("No new papers found")
