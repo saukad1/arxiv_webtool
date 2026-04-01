@@ -83,7 +83,7 @@ if __name__ == "__main__":
     df_26 = pd.read_parquet(PARQUET_PATH_BIG, storage_options={"token": gcp_credentials})
     start_date = df_26['date_only'].max()
     #end_date = pd.Timestamp.today().date()
-    end_date = pd.to_datetime('2026-03-30').date()
+    end_date = pd.to_datetime('2026-03-31').date()
     print('Done!')
     print("-"*st_length)
 
@@ -94,55 +94,58 @@ if __name__ == "__main__":
         subj_set = 'physics:'+sub
         outputs = outputs + fetch_data(subj_set, str(start_date), str(end_date), printout=show, str_len=st_length)
 
-    df = pd.DataFrame(outputs)
-    df = df.drop_duplicates(subset=['id'], keep='first')
-    df = df.reset_index(drop=True)
-    df['date_only'] = pd.to_datetime(df['date']).dt.date
-    df = df.drop(columns=['date'])
-    df['read'] = 0
-    
-    
-    print("*"*st_length)
+    if len(outputs)>=0:
+        df = pd.DataFrame(outputs)
+        df = df.drop_duplicates(subset=['id'], keep='first')
+        df = df.reset_index(drop=True)
+        df['date_only'] = pd.to_datetime(df['date']).dt.date
+        df = df.drop(columns=['date'])
+        df['read'] = 0
+        
+        
+        print("*"*st_length)
 
-    print("Loading embedding model...")
-    login(token=hf_token)
-    
+        print("Loading embedding model...")
+        login(token=hf_token)
+        
 
-    device ="cpu"
-    model_id = "google/embeddinggemma-300M"
-    emb_model = SentenceTransformer(model_id).to(device=device)
-    print(f"Loaded Embedding Gemma to decive {emb_model.device}")
-    print("Total number of parameters in the model:", sum([p.numel() for _, p in emb_model.named_parameters()]))
+        device ="cpu"
+        model_id = "google/embeddinggemma-300M"
+        emb_model = SentenceTransformer(model_id).to(device=device)
+        print(f"Loaded Embedding Gemma to decive {emb_model.device}")
+        print("Total number of parameters in the model:", sum([p.numel() for _, p in emb_model.named_parameters()]))
 
-    print("Loading Joblib classifier from GCS...")
-    fs = gcsfs.GCSFileSystem(token=gcp_credentials)
-    with fs.open(MODEL_PATH, 'rb') as f:
-        fit_model = joblib.load(f)
+        print("Loading Joblib classifier from GCS...")
+        fs = gcsfs.GCSFileSystem(token=gcp_credentials)
+        with fs.open(MODEL_PATH, 'rb') as f:
+            fit_model = joblib.load(f)
 
-    print("Generating embeddings...")
-    embeddings_array = get_gemma_embedding(df, emb_model)
-    df['embedding'] = list(embeddings_array)
-    score_array = score_vector(fit_model, embeddings_array)
-    df['score'] = score_array
-    pd_save = pd.concat([df_26, df], axis=0, ignore_index=True)
-    pd_save.to_parquet(PARQUET_PATH_BIG, engine='pyarrow', storage_options={"token": gcp_credentials})
-    del df , df_26
+        print("Generating embeddings...")
+        embeddings_array = get_gemma_embedding(df, emb_model)
+        df['embedding'] = list(embeddings_array)
+        score_array = score_vector(fit_model, embeddings_array)
+        df['score'] = score_array
+        pd_save = pd.concat([df_26, df], axis=0, ignore_index=True)
+        pd_save.to_parquet(PARQUET_PATH_BIG, engine='pyarrow', storage_options={"token": gcp_credentials})
+        del df , df_26
 
-    df = pd.read_parquet(PARQUET_PATH_SMALL, storage_options={"token": gcp_credentials})
+        df = pd.read_parquet(PARQUET_PATH_SMALL, storage_options={"token": gcp_credentials})
 
-    mask = (pd_save['score'] >= 0.8)
-    pd_save = pd_save[mask].reset_index(drop=True)
-    pd_save.drop(columns=["embedding"], inplace=True)
-    ID_mask  = ~pd_save['id'].isin(df['id'])
-    pd_save_unique = pd_save[ID_mask].reset_index(drop=True)
-    pd_save_unique['star']=0
-    del pd_save
-    try:
-        if set(pd_save_unique.columns) == set(df.columns):
-            pd_save_small = pd.concat([df, pd_save_unique], axis=0, ignore_index=True)
-            print(f'Saving df_streamlit.parquet with {pd_save_unique.shape[0]} new entries')
-            pd_save_small.to_parquet(PARQUET_PATH_SMALL, engine='pyarrow', storage_options={"token": gcp_credentials})
-            print('Saved successfully. Exiting...')
-    except ValueError:
-        print("Columns do not match")
-    print("Exiting.")
+        mask = (pd_save['score'] >= 0.8)
+        pd_save = pd_save[mask].reset_index(drop=True)
+        pd_save.drop(columns=["embedding"], inplace=True)
+        ID_mask  = ~pd_save['id'].isin(df['id'])
+        pd_save_unique = pd_save[ID_mask].reset_index(drop=True)
+        pd_save_unique['star']=0
+        del pd_save
+        try:
+            if set(pd_save_unique.columns) == set(df.columns):
+                pd_save_small = pd.concat([df, pd_save_unique], axis=0, ignore_index=True)
+                print(f'Saving df_streamlit.parquet with {pd_save_unique.shape[0]} new entries')
+                pd_save_small.to_parquet(PARQUET_PATH_SMALL, engine='pyarrow', storage_options={"token": gcp_credentials})
+                print('Saved successfully. Exiting...')
+        except ValueError:
+            print("Columns do not match")
+        print("Exiting.")
+    else:
+        print("No new papers found")
