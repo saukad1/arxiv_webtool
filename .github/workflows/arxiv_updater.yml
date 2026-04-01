@@ -1,0 +1,35 @@
+name: Weekly Arxiv Updater
+
+on:
+  schedule:
+    # '0 8 * * 1-5' translates to:
+    # 0: Minute 0
+    # 8: Hour 8 (08:00 UTC, which is 12:00 AM PST)
+    # *: Every day of the month
+    # *: Every month
+    # 1-5: Monday through Friday
+    - cron: '0 8 * * 1-5' 
+  workflow_dispatch: 
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas pyarrow gcsfs tqdm sickle sentence-transformers joblib huggingface_hub
+
+      - name: Run Arxiv Updater
+        env:
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python arxiv_updater.py

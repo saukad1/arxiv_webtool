@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import json, re, joblib, os, gcsfs
-from tqdm import tqdm
 from sickle import Sickle
 from sentence_transformers import SentenceTransformer
 from huggingface_hub import login
@@ -21,7 +20,7 @@ def clean_abstract(text):
 def get_gemma_embedding(df, emb_model):
     temp = 'Title: ' + df['title'] + '. ' +'Abstract: ' +  clean_abstract(df['abstract'])
     all_embeddings = []
-    for text in tqdm(temp.tolist()):
+    for text in temp.tolist():
         all_embeddings.append(emb_model.encode(text))
     
     return np.vstack(all_embeddings)
