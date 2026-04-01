@@ -1,4 +1,4 @@
-name: Daily Arxiv Updater
+name: Test
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
     # *: Every day of the month
     # *: Every month
     # 1-5: Monday through Friday
-    - cron: '43 11 * * 1-5' 
+    - cron: '*/5 * * * *' 
   workflow_dispatch: 
 
 jobs:
@@ -24,12 +24,5 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install dependencies
-        run: |
-          pip install numpy pandas tqdm pyarrow gcsfs tqdm sickle sentence-transformers joblib huggingface_hub scikit-learn==1.8.0
-
-      - name: Run Arxiv Updater
-        env:
-          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python arxiv_updater.py
+      - name: Run Test
+        run: echo "test"
