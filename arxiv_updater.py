@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import json, re, joblib, os, gcsfs
+from tqdm import tqdm
 from sickle import Sickle
 from sentence_transformers import SentenceTransformer
 from huggingface_hub import login
@@ -20,7 +21,7 @@ def clean_abstract(text):
 def get_gemma_embedding(df, emb_model):
     temp = 'Title: ' + df['title'] + '. ' +'Abstract: ' +  clean_abstract(df['abstract'])
     all_embeddings = []
-    for text in temp.tolist():
+    for text in tqdm(temp.tolist()):
         all_embeddings.append(emb_model.encode(text))
     
     return np.vstack(all_embeddings)
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     score_array = score_vector(fit_model, embeddings_array)
     df['score'] = score_array
     pd_save = pd.concat([df_26, df], axis=0, ignore_index=True)
-    pd_save.to_parquet(PARQUET_PATH_BIG, engine='pyarrow')
+    pd_save.to_parquet(PARQUET_PATH_BIG, engine='pyarrow', storage_options={"token": gcp_credentials})
     del df , df_26
 
     df = pd.read_parquet(PARQUET_PATH_SMALL, storage_options={"token": gcp_credentials})
@@ -134,11 +135,12 @@ if __name__ == "__main__":
     ID_mask  = ~pd_save['id'].isin(df['id'])
     pd_save_unique = pd_save[ID_mask].reset_index(drop=True)
     pd_save_unique['star']=0
+    del pd_save
     try:
         if set(pd_save_unique.columns) == set(df.columns):
-            pd_save = pd.concat([df, pd_save_unique], axis=0, ignore_index=True)
+            pd_save_small = pd.concat([df, pd_save_unique], axis=0, ignore_index=True)
             print(f'Saving df_streamlit.parquet with {pd_save_unique.shape[0]} new entries')
-            pd_save.to_parquet(PARQUET_PATH_SMALL, engine='pyarrow')
+            pd_save_small.to_parquet(PARQUET_PATH_SMALL, engine='pyarrow', storage_options={"token": gcp_credentials})
             print('Saved successfully. Exiting...')
     except ValueError:
         print("Columns do not match")
