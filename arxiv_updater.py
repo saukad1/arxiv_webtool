@@ -66,6 +66,9 @@ def fetch_data(subj_set, start_date:str, end_date:str, printout=False,str_len=10
 
 if __name__ == "__main__":
 
+    st_length = 100
+    show=False
+
     BUCKET_NAME = "my-arxiv-parquet-bucket"
     PARQUET_PATH_SMALL = f"gs://{BUCKET_NAME}/df_streamlit.parquet"
     PARQUET_PATH_BIG= f"gs://{BUCKET_NAME}/scored_26.parquet"
@@ -74,12 +77,14 @@ if __name__ == "__main__":
     gcp_credentials = json.loads(os.environ["GCP_SERVICE_ACCOUNT"])
     hf_token = os.environ["HF_TOKEN"]
 
+    print("-"*st_length)
+    print('Loading dataframes')
     df_26 = pd.read_parquet(PARQUET_PATH_BIG, storage_options={"token": gcp_credentials})
     start_date = df_26['date_only'].max()
     end_date = pd.Timestamp.today().date()
+    print('Done!')
+    print("-"*st_length)
 
-    st_length = 100
-    show=False
 
     sub_classes = ['hep-lat', 'nucl-th', 'quant-ph']
     outputs = []
