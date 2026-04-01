@@ -82,7 +82,8 @@ if __name__ == "__main__":
     print('Loading dataframes')
     df_26 = pd.read_parquet(PARQUET_PATH_BIG, storage_options={"token": gcp_credentials})
     start_date = df_26['date_only'].max()
-    end_date = pd.Timestamp.today().date()
+    #end_date = pd.Timestamp.today().date()
+    end_date = pd.to_datetime('2026-01-30').date()
     print('Done!')
     print("-"*st_length)
 
