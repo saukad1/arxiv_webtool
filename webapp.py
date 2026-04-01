@@ -4,8 +4,8 @@ import math
 
 # 1. SETUP & CONFIG
 # ---------------------------------------------------------
-st.set_page_config(page_title="Relevant arXiv Papers", layout="wide")
-st.title("My arXiv Fitlering Tool")
+st.set_page_config(page_title="arXiv filter", layout="wide")
+st.header("My arXiv filtering tool")
 BUCKET_NAME = "my-arxiv-parquet-bucket"
 PARQUET_PATH = f"gs://{BUCKET_NAME}/df_streamlit.parquet"
 
@@ -23,6 +23,8 @@ if 'df' not in st.session_state:
     st.session_state.df = load_data()
 
 df = st.session_state.df
+min_date = df['date_only'].min()
+max_date = df['date_only'].max()
 
 def toggle_read(paper_id):
     """Updates the main dataframe and saves to disk when a checkbox is clicked."""
@@ -61,22 +63,23 @@ def toggle_star(paper_id):
 if df.empty:
     st.error("No dataset found!")
     st.stop()
-st.markdown("This is an arXiv paper classifier that scores arxiv papers from 0 to 1 based on my research interests. \nBecause who has time to read ~50 abstracts in the quant-ph list everyday!")
+
 st.sidebar.header("सौरभ का?")
 password = st.sidebar.text_input("Enter password to edit", type="password")
 if password == st.secrets["admin_password"]:
     st.sidebar.success("ये बाळा, वाच जरा!")
     st.subheader("Editing allowed")
+else:
+    st.subheader("My arXiv filtering tool")
+    st.info(f"**Curated Daily arXiv Feed**\n\nAn automated classifier that scores daily arXiv papers in'quant-ph + hep-lat + nuc-th'lists from 0 to 1 based on their alignment with my research interests. Because keeping up with 50+ abstracts a day shouldn't be a full-time job. The most recent entry in the database is from {max_date.strftime('%m/%d/%Y')}.", icon=":material/for_you:")
 
 ########################################################################
 # If Passpord is correct
 ########################################################################
 
 with st.sidebar:
-
     st.header("Filter")
 
-    # Tags
     st.markdown("Show")
     show_read = st.sidebar.toggle(":green-badge[:material/auto_stories: Read]", value=True)
     show_unread = st.sidebar.toggle(":red-badge[:material/book: Unread]", value=True)
@@ -86,34 +89,39 @@ with st.sidebar:
 
     
     # Date Range
-    min_date = df['date_only'].min()
-    max_date = df['date_only'].max()
-    default_start_date = max(min_date, max_date - pd.Timedelta(days=14))
+    default_start_date = max(min_date, max_date - pd.Timedelta(days=7))
+    st.markdown("Select dates")
     date_selection = st.date_input(
         "Date Range",
         value=(default_start_date, max_date),
         min_value=min_date,
-        max_value=max_date
+        max_value=max_date,
+        label_visibility="collapsed"
     )
     if len(date_selection) == 2:
         start_date, end_date = date_selection
+        date_string = f" between {start_date.strftime('%m/%d/%Y')}-{end_date.strftime('%m/%d/%Y')}"
     elif len(date_selection) == 1:
         start_date = date_selection[0]
         end_date = date_selection[0]
+        date_string = f" from {start_date.strftime('%m/%d/%Y')}"
     else:
         start_date, end_date = default_start_date, max_date
+        date_string = ""
 
-    # Score slider
+    st.markdown("Select a score range")
     min_score, max_score = st.sidebar.slider(
         "Select Score Range",
         min_value=0.8,
         max_value=1.0,
-        value=(0.95, 1.0),  
+        value=(0.9, 1.0),  
         step=0.005,
-        format="%0.3f"
+        format="%0.3f",
+        label_visibility="collapsed"
     )
 
     st.sidebar.subheader("Sorting")
+    st.markdown("Sort by")
     sort_option = st.sidebar.selectbox(
         "Sort Data By",
         options=[
@@ -121,7 +129,8 @@ with st.sidebar:
             "Score: Lowest to Highest",
             "Date: Newest to Oldest",
             "Date: Oldest to Newest"
-        ]
+        ],
+        label_visibility="collapsed"
     )
 
 # 4. FILTERING LOGIC
@@ -162,24 +171,29 @@ filtered_df = filtered_df.sort_values(by=sort_cols, ascending=asc_opts)
 PAGE_SIZE = 20
 total_pages = math.ceil(total_matches / PAGE_SIZE)
 
+# Ensure valid page number
 if 'page' not in st.session_state:
     st.session_state.page = 1
 
 with st.sidebar:
     st.write(f"**Matches:** {total_matches}")
     
-    if total_pages > 1:
-        page = st.number_input("Page", min_value=1, max_value=total_pages, step=1)
-        start_idx = (page - 1) * PAGE_SIZE
-        end_idx = start_idx + PAGE_SIZE
-    else:
-        start_idx = 0
-        end_idx = PAGE_SIZE
 
 # 6. DISPLAY LOOP
 # ---------------------------------------------------------
+if total_pages > 1:
+    # Number input is better than slider for paging
+    page = st.number_input("Page", min_value=1, max_value=total_pages, step=1, width=150)
+    start_idx = (page - 1) * PAGE_SIZE
+    end_idx = start_idx + PAGE_SIZE
+else:
+    start_idx = 0
+    end_idx = PAGE_SIZE
 
-st.markdown(f"### Showing {start_idx + 1}-{min(end_idx, total_matches)} of {total_matches}")
+if total_matches>0:
+    st.markdown(f"##### Showing {start_idx + 1}-{min(end_idx, total_matches)} of {total_matches}"+date_string)
+else:
+    st.info(f"**No matches found**\n\nThe database only has entries above 0.8 alignemnt score. Change the date range or score filter.", icon=":material/error:")
 
 df_view = filtered_df.iloc[start_idx:end_idx]
 
