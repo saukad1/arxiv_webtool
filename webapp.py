@@ -70,7 +70,7 @@ if password == st.secrets["admin_password"]:
     st.subheader("Editing allowed")
 else:
     st.subheader("My arXiv filtering tool")
-    st.info(f"**Curated Daily arXiv Feed**\n\nAn automated classifier that scores daily arXiv papers in 'quant-ph + hep-lat + nuc-th' lists from 0 to 1 based on their alignment with my research interests. Because keeping up with 50+ abstracts a day should not be a full-time job.\n\nThe most recent entry in the database is from **{max_date.strftime('%m/%d/%Y')}**.", icon=":material/for_you:")
+    st.info(f"**Curated Daily arXiv Feed**\n\nAn automated classifier that scores daily arXiv papers in 'quant-ph + hep-lat + nucl-th' lists from 0 to 1 based on their alignment with my research interests. Because keeping up with 50+ abstracts a day should not be a full-time job.\n\nThe most recent entry in the database is from **{max_date.strftime('%m/%d/%Y')}**.", icon=":material/for_you:")
 
 ########################################################################
 # If Passpord is correct
@@ -89,12 +89,13 @@ with st.sidebar:
     
     # Date Range
     default_start_date = max(min_date, max_date - pd.Timedelta(days=7))
+    cal_max_day = pd.Timestamp.today().date()
     st.markdown("Select dates")
     date_selection = st.date_input(
         "Date Range",
         value=(default_start_date, max_date),
         min_value=min_date,
-        max_value=max_date,
+        max_value=cal_max_day,
         label_visibility="collapsed"
     )
     if len(date_selection) == 2:
