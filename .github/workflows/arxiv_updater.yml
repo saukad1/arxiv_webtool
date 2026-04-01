@@ -8,7 +8,7 @@ on:
     # *: Every day of the month
     # *: Every month
     # 1-5: Monday through Friday
-    - cron: '43 11 * * 1-5' 
+    - cron: '47 11 * * 1-5' 
   workflow_dispatch: 
 
 jobs:
