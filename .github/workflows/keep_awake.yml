@@ -1,0 +1,21 @@
+name: Keep Streamlit Awake
+
+on:
+  schedule:
+    # Runs every 10 hours
+    - cron: '0 */10 * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-awake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Push empty commit to reset Streamlit timer
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git commit --allow-empty -m "Heartbeat commit to keep Streamlit awake"
+          git push
